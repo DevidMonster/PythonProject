@@ -1,0 +1,39 @@
+from datetime import datetime, timedelta, timezone
+import firebase_admin
+from firebase_admin import credentials, storage
+import json
+
+# Dữ liệu JSON của tệp serviceAccountKey.json
+json_data = {
+  "type": "service_account",
+  "project_id": "cloud-app-b7625",
+  "private_key_id": "253ba05057501761d98a2f9d0209e8e57d5ba590",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDDUxDgVy6hpwlq\ncwmYKsHe5gkOIeq5DxETL77hntLfgULrrfm/8vH6kVlyM6+d9iJdbHjsbCl4tOCU\ndi4DB3tVCNSnc1Y9KxONwfAWAaXASEBfkocPLa/m+p3nxnYLyEwL4YuVQMHxrVb6\nfY7MeZGXc0m3SB0BJtyTb1aOp7aRIPAo0qbgzQKej/aa2Ca369RSnQREE3xqD5LB\n0Kd72TJQe+Qa3/sHEHJJcN+RkibYJi2Ua9l8wKNtceQC2kBglMRzUAVSgZwUHrup\nH7g8MxAJyeyx3IAEu61oVQt9oGxC8PQXlZh1rrKA5dlmrH2pFgvJbeoZWIWqrqvw\n4a+9vi+LAgMBAAECggEABiIzo3fZZQYjy431PSwKjn9WxXTXNBx/AsU7D0a3hIFA\noroB3783ThEGaAmreCBkj956JaJ34ux7KO5VH486lj8Cvodmq+EQaiEu8uH2XIVo\nUBf/2cArh+tSzhZzWoddq/nXMkaoUHiLBK6wr0caBVF/fRvsnT6lKpQSecRWfVQn\nazPxDQcJ2TeQg1twvoILKNnjWhaIzTB/jnMeMGLEqspstYPWJlFDPAa4c4zDczVh\n1wPsx3rn99cjeBF4Yx9DANzcztJ1VAebrynx95Mcs0BpR5ul8Rbls6R+/YVBWYk5\nDwdgp3FvIDveeJoMIDNeg3/cH8FZUOkNRQe+rHWQIQKBgQDgL+/1/pa5UQQatk3y\nSxgzMkDEGIWRnTsfEaWEsBlm/3iM+HnbT0iPKh0kQ2tT1cmYlkNzGYaCQBJIED/Y\nrJ1Htqq7peQ5P2aNA02F11LyZAqFh90s/dmgo0HCMvDDW0XH9CmLbXd6hUgUIzeY\nwn0zbsvVDP1pkbITa65uedqvkwKBgQDfCqD65q3X0zeN6Ia1jRIdqBEXnwE+LXIW\nxfpLaNzFZoWEa7kC1vO6qKmAzp9cV5dp50x/1nQqShhLMO5wFoeErrr5G2pdy2Xe\nsRAA8g0cm2jCd0EPQ/rUeiqX5+NMgdgg6Wad+MexLr4GYvzjoEDvYgzboHLcIKc9\ndGfJE5hLKQKBgEjXipJVLEf+SOUdAuqM98n6tAyDIzMS8VjA9RTN2xMaQuMbAQz/\nD8Zkmp9jwIW22w/XEwdc7dV4V/hOP1B5lYjtkz/xQNxQ+1MqFZA9TFgxpTGJ2ZV6\nzbFiGkWtI4l2KJA1hyIkaUPH9omEf9YEq4WApH4PAG/CxSeGP2Dp+uI9AoGAdlbZ\nWsYR7rUugKii8KjMt9d4WiQPMMJECjk4t9IHcOUYak4Nd6g84QikBqeafhArUhFa\n0WkjcVymzx5DJE2P0aIzqgAVy3YjsqgXaakDs+3xA1zqtALJjvrSpo5uVyV9Wtj7\njU12BlhakmDq9IsOaPSJBe53grwAf+bHOjSfVSECgYEAxquN4YeZapXMP2f7XEar\n6Bs8tvYudUytN79+pkqV1bx0xjooztvWhLQN1+mCaZfoVUixEPeZXwqnjK6Yc1xO\n7XfgVTcFdSUPvQw05ShboImWzGSKgfxg+a7UHWhLqHhIaOTWpO9ldbJLj2yWrmUJ\ncK5WhGQ2cyTvCHAanFgbAaM=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-s8sdm@cloud-app-b7625.iam.gserviceaccount.com",
+  "client_id": "114572069118226306719",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-s8sdm%40cloud-app-b7625.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
+
+# Khởi tạo Firebase Admin SDK từ đối tượng dữ liệu JSON
+cred = credentials.Certificate(json_data)
+firebase_admin.initialize_app(cred, {'storageBucket': 'cloud-app-b7625.appspot.com'})
+
+def upload_images_to_firebase(fileNames, file_objs):
+    image_urls = []
+
+    for fileName, file_obj in zip(fileNames, file_objs):
+        # Trả về đối tượng bucket
+        bucket = storage.bucket()
+
+        # Tạo đối tượng blob
+        blob = bucket.blob(fileName)
+        blob.upload_from_file(file_obj, content_type=file_obj.content_type)
+        blob.make_public()
+
+        image_urls.append(blob.public_url)
+
+    return image_urls
